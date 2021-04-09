@@ -1,0 +1,1 @@
+const {sqlForPartialUpdate} = require('./sql');
