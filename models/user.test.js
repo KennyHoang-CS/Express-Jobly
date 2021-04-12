@@ -135,6 +135,7 @@ describe("get", function () {
   test("works", async function () {
     let user = await User.get("u1");
     expect(user).toEqual({
+      applications: [],
       username: "u1",
       firstName: "U1F",
       lastName: "U1L",
@@ -227,4 +228,41 @@ describe("remove", function () {
       expect(err instanceof NotFoundError).toBeTruthy();
     }
   });
+});
+
+
+/****************************** applyToJob */
+
+describe("applyToJob", function () {
+
+  test("works", async function () {
+    await User.applyToJob("u1", 1);
+    let result = await db.query(
+      `SELECT * FROM applications
+      WHERE job_id = $1`, [1]
+    );
+    expect(result.rows).toEqual([
+      {
+        username: "u1",
+        job_id: 1
+      }
+    ])
+  });
+
+  test("error if job doesn't exist", async function () {
+    try{
+      await User.applyToJob("u1", 999);
+    } catch (err) {
+      expect(err instanceof NotFoundError).toBeTruthy();
+    }
+  })
+
+  test("error if username doesn't exist", async function () {
+    try{
+      await User.applyToJob("user-does-not-exist", 1);
+    } catch (err) {
+      expect(err instanceof NotFoundError).toBeTruthy();
+    }
+  })
+  
 });

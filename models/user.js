@@ -139,6 +139,15 @@ class User {
 
     if (!user) throw new NotFoundError(`No user: ${username}`);
 
+    // Get the user's list of job applications.
+    const appRes = await db.query(
+      `SELECT job_id 
+      FROM applications
+      WHERE username = $1`, [username]
+    );
+
+    user.applications = appRes.rows.map(a => a.job_id);
+    
     return user;
   }
 
@@ -203,6 +212,47 @@ class User {
     const user = result.rows[0];
 
     if (!user) throw new NotFoundError(`No user: ${username}`);
+  }
+
+  /** User applying for job, save to database.
+   * Data --> { username, job_id }
+   * Return --> {username, job_id }
+  */
+  
+  static async applyToJob(username, jobId) {
+    
+    // Check if job exists.
+    const jobRes = await db.query(
+      `SELECT id FROM jobs
+      WHERE id = $1`, [jobId]
+    );
+    
+    let jobExist = jobRes.rows[0];
+    
+    // Throw NotFoundError if job id doesn't exist. 
+    if (!jobExist) {
+      throw new NotFoundError(`Job ${jobId} not found.`);
+    }
+
+    // Check if username exists.
+    const userRes = await db.query(
+      `SELECT username FROM users
+      WHERE username = $1`, [username]
+    );
+
+    let userExist = userRes.rows[0];
+
+    // Throw NotFoundError if username doesn't exist. 
+    if (!userExist) {
+      throw new NotFoundError(`Username: ${username} not found.`);
+    }
+    
+    // At this point, existance of job id and username are checked, so legitimate query.
+    const result = await db.query(
+      `INSERT INTO applications 
+      (username, job_id)
+      VALUES ($1, $2)`, [username, jobId] 
+    )
   }
 }
 
